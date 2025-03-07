@@ -7,7 +7,7 @@ This plugin is provided on AS-IS basis, without any guarantee at all. Author is 
 This plugin for [ASF](https://github.com/JustArchiNET/ArchiSteamFarm/) allows you to view, set and reset achievements in steam games, similar to [SAM](https://github.com/gibbed/SteamAchievementManager). Works only with ASF v4.0+ (make sure to check actual required version in release notes). 
 
 ## Installation
-- download `ASFAchievementManager.zip` file from [latest release](https://github.com/CatPoweredPlugins/ASF-Achievement-Manager/releases/latest).
+- download `ASFAchievementManager.zip` file from [latest release](https://github.com/JackieWaltRyan/ASF-Achievement-Manager/releases/latest).
 - create new folder (for example, `ASFAchievementManager`) in the `plugins` folder of your ASF installation
 - unpack downloaded .zip file to the folder you just created.
 - optionally, configure plugin properties in ASF.json file (see below).
@@ -42,18 +42,16 @@ Examples:<br/>
 ## Configuration
 This plugins adds one additional property in global ASF config (ASF.json).
 
-### `Rudokhvist.AchievementsCulture`
+### `AchievementsCulture`
 Property of `string` type, with default value equal to `null`, that determines in what language you want to see achievement names, if available. If value is `null`, or invalid culture is provided, plugin will fallback to the global culture set in ASF (see [`CurrentCulture`](https://github.com/JustArchiNET/ArchiSteamFarm/wiki/Configuration#currentculture)).
 Accepted values are the same as for [`CurrentCulture`](https://github.com/JustArchiNET/ArchiSteamFarm/wiki/Configuration#currentculture) global ASF property, but please note that only languages actually provided in steam could be displayed, if there is no specified language provided in Steam - plugin will fallback to English names.
 
 Example:
 
-`"Rudokhvist.AchievementsCulture":"uk-UA"`
+`"AchievementsCulture":"uk-UA"`
 
 
-![downloads](https://img.shields.io/github/downloads/CatPoweredPlugins/ASFAchievementManager/total.svg?style=social)
-[![PayPal donate](https://img.shields.io/badge/PayPal-donate-00457c.svg?logo=paypal&logoColor=rgb(1,63,113))](https://www.paypal.com/donate/?business=SX99L4RVR8ZKS&no_recurring=0&item_name=Your+donations+help+me+to+keep+working+on+existing+and+future+plugins+for+ASF.+I+really+appreciate+this%21&currency_code=USD)
-[![Ko-Fi donate](https://img.shields.io/badge/Ko%E2%80%91Fi-donate-ef5d5a.svg?logo=ko-fi)](https://ko-fi.com/rudokhvist)
-[![BTC donate](https://img.shields.io/badge/BTC-donate-f7931a.svg?logo=bitcoin)](https://www.blockchain.com/explorer/addresses/btc/bc1q8f3zcss5j6gq7hpvum0nzxvfgnm5f8mtxflfxh)
-[![LTC donate](https://img.shields.io/badge/LTC-donate-485fc7.svg?logo=litecoin&logoColor=rgb(92,115,219))](https://litecoinblockexplorer.net/address/LRFrKDFhyEgv7PKb2vFrdYBP7ibUg898Vk)
-[![Steam donate](https://img.shields.io/badge/Steam-donate-000000.svg?logo=steam)](https://steamcommunity.com/tradeoffer/new/?partner=95843925&token=NTWfCz_R)
+![downloads](https://img.shields.io/github/downloads/JackieWaltRyan/ASFAchievementManager/total.svg?style=social)
+[![PayPal donate](https://img.shields.io/badge/PayPal-donate-00457c.svg?logo=paypal)](https://www.paypal.com/donate/?hosted_button_id=G3HY3UDX694WQ)
+[![PrivatBank donate](https://img.shields.io/badge/UAH-donate-2775ca.svg?logo=cashapp)](https://www.privat24.ua/send/g21va)
+[![Steam donate](https://img.shields.io/badge/Steam-donate-000000.svg?logo=steam)](https://steamcommunity.com/tradeoffer/new/?partner=317077202&token=4c-Gt9Ji)

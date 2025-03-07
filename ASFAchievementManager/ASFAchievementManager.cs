@@ -25,7 +25,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
-	public string RepositoryName => "CatPoweredPlugins/ASFAchievementManager";
+	public string RepositoryName => "JackieWaltRyan/ASFAchievementManager";
 
 	public async Task<Uri?> GetTargetReleaseURL(Version asfVersion, string asfVariant, bool asfUpdate, bool stable, bool forced) {
 		ArgumentNullException.ThrowIfNull(asfVersion);
@@ -79,7 +79,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 	private static readonly char[] Separator = [','];
 
 	public Task OnLoaded() {
-		ASF.ArchiLogger.LogGenericInfo("ASF Achievement Manager Plugin by Rudokhvist, powered by ginger cats");
+		ASF.ArchiLogger.LogGenericInfo("ASF Achievement Manager Plugin by JackieWaltRyan, powered by ginger cats");
 		return Task.CompletedTask;
 	}
 
@@ -106,6 +106,34 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		}
 	}
 
+	public async Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
+		if (additionalConfigProperties == null) {
+			return;
+		}
+
+		bool isEnabled = false;
+
+		foreach (KeyValuePair<string, JsonElement> configProperty in additionalConfigProperties) {
+			switch (configProperty.Key) {
+				case "AchievementsAutoFarm" when (configProperty.Value.ValueKind == JsonValueKind.True || configProperty.Value.ValueKind == JsonValueKind.False): {
+					isEnabled = configProperty.Value.GetBoolean();
+					bot.ArchiLogger.LogGenericInfo("Achievements Auto Farm: " + isEnabled.ToString());
+					break;
+				}
+			}
+		}
+		
+		if (isEnabled) {
+			await AchievementsAutoFarm(bot).ConfigureAwait(false);
+
+			Timer RefreshTimer = null;
+
+			int CollectTimeout = 60 * 60 * 1000;
+
+			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
+		}
+	}
+
 	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) => Task.CompletedTask;
 
 	public Task<IReadOnlyCollection<ClientMsgHandler>?> OnBotSteamHandlersInit(Bot bot) {
@@ -115,6 +143,60 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 	}
 
 	//Responses
+
+	private static async Task AchievementsAutoFarm(Bot bot) {
+		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
+		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
+		
+		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Length);
+
+		foreach (string gameID in ownedAppIDs) {
+			string appid = gameID;
+
+			if (!uint.TryParse(appid, out uint appId)) {
+				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
+				return null;
+			}
+
+			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
+				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
+				return null;
+			}
+
+			if (achievementHandler == null) {
+				bot.ArchiLogger.LogNullError(achievementHandler);
+				return null;
+			}
+
+			string achievementNumbers = "*";
+
+			string results = await Task.Run(() => achievementHandler.GetAchievements(bot, appId)).ConfigureAwait(false);
+
+			if (results.Contains("u274C")) {
+				HashSet<uint> achievements = [];
+
+				string[] achievementStrings = achievementNumbers.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
+
+				if (!achievementNumbers.Equals("*", StringComparison.Ordinal)) {
+					foreach (string achievement in achievementStrings) {
+						if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
+							ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
+							return null;
+						}
+
+						_ = achievements.Add(achievementNumber);
+					}
+
+					if (achievements.Count == 0) {
+						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
+						return null;
+					}
+				}
+
+				ASF.ArchiLogger.LogGenericInfo(await Task.Run(() => achievementHandler.SetAchievements(bot, appId, achievements, true)).ConfigureAwait(false));
+			}
+		}
+	}
 
 	private static async Task<string?> ResponseAchievementList(EAccess access, Bot bot, string appids) {
 		if (access < EAccess.Master) {
@@ -231,7 +313,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		if (additionalConfigProperties != null) {
 			foreach (KeyValuePair<string, JsonElement> configProperty in additionalConfigProperties) {
 				switch (configProperty.Key) {
-					case "Rudokhvist.AchievementsCulture" when configProperty.Value.ValueKind == JsonValueKind.String: {
+					case "AchievementsCulture" when configProperty.Value.ValueKind == JsonValueKind.String: {
 						string configCulture = configProperty.Value.ToString();
 						try {
 							AchievementsCulture = CultureInfo.CreateSpecificCulture(configCulture);

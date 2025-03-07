@@ -8,8 +8,8 @@
 
 	<PropertyGroup>
 		<ApplicationIcon />
-		<Authors>Rudokhvist</Authors>
-		<Company>CatPoweredPlugins</Company>
+		<Authors>JackieWaltRyan</Authors>
+		<Company>JackieWaltRyan</Company>
 		<Copyright>Copyright © $([System.DateTime]::UtcNow.Year) $(Authors)</Copyright>
 		<Description>$(PluginName) by $(Authors). This plugin is cat powered!</Description>
 		<PackageIcon />
