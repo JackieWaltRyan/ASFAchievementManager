@@ -152,28 +152,28 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Count);
 
 		foreach (uint gameID in ownedAppIDs) {
-			uint appid = gameID;
+			string appid = gameID.ToString();
 
 			if (!uint.TryParse(appid, out uint appId)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
-				return null;
+				return "";
 			}
 
 			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
-				return null;
+				return "";
 			}
 
 			if (achievementHandler == null) {
 				bot.ArchiLogger.LogNullError(achievementHandler);
-				return null;
+				return "";
 			}
 
 			string achievementNumbers = "*";
 
 			string results = await Task.Run(() => achievementHandler.GetAchievements(bot, appId)).ConfigureAwait(false);
 
-			if (results.Contains("u274C")) {
+			if (results.Contains("u274C", System.StringComparison)) {
 				HashSet<uint> achievements = [];
 
 				string[] achievementStrings = achievementNumbers.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
@@ -182,7 +182,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 					foreach (string achievement in achievementStrings) {
 						if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
 							ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
-							return null;
+							return "";
 						}
 
 						_ = achievements.Add(achievementNumber);
@@ -190,7 +190,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 					if (achievements.Count == 0) {
 						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
-						return null;
+						return "";
 					}
 				}
 
