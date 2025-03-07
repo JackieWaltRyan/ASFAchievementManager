@@ -145,7 +145,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 	//Responses
 
-	private static async AchievementsAutoFarm(Bot bot) {
+	private static async Task<string?> AchievementsAutoFarm(Bot bot) {
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
