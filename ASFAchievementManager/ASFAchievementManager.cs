@@ -23,8 +23,6 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 	private static readonly ConcurrentDictionary<Bot, AchievementHandler> AchievementHandlers = new();
 	public string Name => nameof(ASFAchievementManager);
 	public Version Version => typeof(ASFAchievementManager).Assembly.GetName().Version ?? new Version("0");
- 
-    public Timer RefreshTimer = new Timer(e => {}, null, 1000000, 1000000);;
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
@@ -127,11 +125,13 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		}
 		
 		if (isEnabled) {
-			await AchievementsAutoFarm(bot).ConfigureAwait(false);
+            Timer RefreshTimer;
+  
+			await AchievementsAutoFarm(bot, RefreshTimer).ConfigureAwait(false);
 
 			int CollectTimeout = 60 * 60 * 1000;
 
-			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
+			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot, RefreshTimer).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
 		}
 
         return Task.CompletedTask;
@@ -145,14 +145,14 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		return Task.FromResult<IReadOnlyCollection<ClientMsgHandler>?>([currentBotAchievementHandler]);
 	}
 
-    public Task OnBotDisconnected(Bot bot, EResult reason) {
-		RefreshTimer.Dispose();
-        return Task.CompletedTask;
-	}
-
 	//Responses
 
-	private static async Task AchievementsAutoFarm(Bot bot) {
+	private static async Task AchievementsAutoFarm(Bot bot, Timer RefreshTimer) {
+        if (bot == null) {
+            RefreshTimer.Dispose();
+            return null;
+        }
+        
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
