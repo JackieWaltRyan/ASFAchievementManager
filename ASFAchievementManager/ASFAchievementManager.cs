@@ -143,13 +143,13 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		return Task.FromResult<IReadOnlyCollection<ClientMsgHandler>?>([currentBotAchievementHandler]);
 	}
 
-    public Task OnBotDisconnected(Bot bot, EResult reason) {
-		return RefreshTimer.Dispose();
+    public void OnBotDisconnected(Bot bot, EResult reason) {
+		RefreshTimer.Dispose();
 	}
 
 	//Responses
 
-	private static async Task<string?> AchievementsAutoFarm(Bot bot) {
+	private static async void AchievementsAutoFarm(Bot bot) {
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
@@ -160,17 +160,17 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 			if (!uint.TryParse(appid, out uint appId)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
-				return "";
+				return;
 			}
 
 			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
-				return "";
+				return;
 			}
 
 			if (achievementHandler == null) {
 				bot.ArchiLogger.LogNullError(achievementHandler);
-				return "";
+				return;
 			}
 
 			string achievementNumbers = "*";
@@ -186,7 +186,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 					foreach (string achievement in achievementStrings) {
 						if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
 							ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
-							return "";
+							return;
 						}
 
 						_ = achievements.Add(achievementNumber);
@@ -194,16 +194,12 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 					if (achievements.Count == 0) {
 						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
-						return "";
+						return;
 					}
 				}
 
 				ASF.ArchiLogger.LogGenericInfo(await Task.Run(() => achievementHandler.SetAchievements(bot, appId, achievements, true)).ConfigureAwait(false));
-
-                return "";
 			}
-   
-            return "";
 		}
 	}
 
