@@ -3,174 +3,81 @@ name: Plugin-publish
 on:
   push:
     branches: main
-  pull_request:
-    branches: main
-
-env:
-  CONFIGURATION: Release
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
-  DOTNET_NOLOGO: true
-  DOTNET_SDK_VERSION: 9.0
 
 permissions:
   contents: read
 
 jobs:
-  version:
-    runs-on: windows-latest
-  
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.9
-
-      - name: Create version
-        id: create_version
-        shell: python
-        run: |
-          from datetime import datetime
-          from os import getenv
-          
-          DATE_Y = int(datetime.now().strftime(format="%y"))
-          DATE_M = int(datetime.now().strftime(format="%m"))
-          DATE_D = int(datetime.now().strftime(format="%d"))
-          TIME = str(int(datetime.now().strftime(format="%H%M%S"))).rjust(6, "0")
-          
-          VERSION = f"{DATE_Y}.{DATE_M}.{DATE_D}.{TIME}"
-          
-          print(VERSION)
-          
-          with open(file=getenv(key="GITHUB_OUTPUT"),
-                    mode="a") as github_output_file:
-              github_output_file.write(f"version={VERSION}")
-  
-  publish:
-    needs: version
-    
+  publish:    
     strategy:
       fail-fast: false
+      
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
 
     outputs:
       PLUGIN_NAME: ${{ steps.plugin-name.outputs.info }}
+      PLUGIN_VERSION: ${{ steps.plugin-version.outputs.info }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4.2.2
-      with:
-        show-progress: false
-        submodules: recursive
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          show-progress: false
+          submodules: recursive
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v4.3.0
-      with:
-        dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4.3.0
+        with:
+          dotnet-version: 9.0
 
-    - name: Verify .NET Core
-      run: dotnet --info
+      - name: Verify .NET Core
+        run: dotnet --info
 
-    - name: Parse plugin name from Directory.Build.props
-      id: plugin-name
-      uses: mavrosxristoforos/get-xml-info@2.0
-      with:
-        xml-file: 'Directory.Build.props'
-        xpath: '//PluginName'
+      - name: Parse plugin name from Directory.Build.props
+        id: plugin-name
+        uses: mavrosxristoforos/get-xml-info@2.0
+        with:
+          xml-file: 'Directory.Build.props'
+          xpath: '//PluginName'
 
-    - name: Publish plugin on Unix
-      if: startsWith(matrix.os, 'macos-') || startsWith(matrix.os, 'ubuntu-')
-      env:
-        PLUGIN_NAME: ${{ steps.plugin-name.outputs.info }}
-      shell: sh
-      run: |
-        set -eu
+      - name: Parse plugin version from Directory.Build.props
+        id: plugin-version
+        uses: mavrosxristoforos/get-xml-info@2.0
+        with:
+          xml-file: 'Directory.Build.props'
+          xpath: '//Version'
 
-        dotnet publish "$PLUGIN_NAME" -c "$CONFIGURATION" -o "out/plugin/${PLUGIN_NAME}" -p:ContinuousIntegrationBuild=true -p:TargetLatestRuntimePatch=false -p:UseAppHost=false --nologo
+      - name: Publish plugin on Unix
+        if: startsWith(matrix.os, 'ubuntu-')
+        env:
+          PLUGIN_NAME: ${{ steps.plugin-name.outputs.info }}
+        shell: sh
+        run: |
+          set -eu
 
-        # By default use fastest compression
-        seven_zip_args="-mx=1"
-        zip_args="-1"
+          dotnet publish "$PLUGIN_NAME" -c "Release" -o "out/plugin/${PLUGIN_NAME}" -p:ContinuousIntegrationBuild=true -p:TargetLatestRuntimePatch=false -p:UseAppHost=false --nologo
 
-        # Include extra logic for builds marked for release
-        case "$GITHUB_REF" in
-            "refs/tags/"*)
-                # Tweak compression args for release publishing
-                seven_zip_args="-mx=9 -mfb=258 -mpass=15"
-                zip_args="-9"
-                ;;
-        esac
+          seven_zip_args="-mx=9 -mfb=258 -mpass=15"
+          zip_args="-9"
 
-        # Create the final zip file
-        case "$(uname -s)" in
-            "Darwin")
-                # We prefer to use zip on OS X as 7z implementation on that OS doesn't handle file permissions (chmod +x)
-                if command -v zip >/dev/null; then
-                    (
-                        cd "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}"
-                        zip -q -r $zip_args "../../${PLUGIN_NAME}.zip" .
-                    )
-                else
-                    7z a -bd -slp -tzip -mm=Deflate $seven_zip_args "out/${PLUGIN_NAME}.zip" "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}/*"
-                fi
-                ;;
-            *)
-                if command -v 7z >/dev/null; then
-                    7z a -bd -slp -tzip -mm=Deflate $seven_zip_args "out/${PLUGIN_NAME}.zip" "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}/*"
-                else
-                    (
-                        cd "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}"
-                        zip -q -r $zip_args "../../${PLUGIN_NAME}.zip" .
-                    )
-                fi
-                ;;
-        esac
+          if command -v 7z >/dev/null; then
+              7z a -bd -slp -tzip -mm=Deflate $seven_zip_args "out/${PLUGIN_NAME}.zip" "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}/*"
+          else
+              (
+                  cd "${GITHUB_WORKSPACE}/out/plugin/${PLUGIN_NAME}"
+                  zip -q -r $zip_args "../../${PLUGIN_NAME}.zip" .
+              )
+          fi
 
-    - name: Publish plugin on Windows
-      if: startsWith(matrix.os, 'windows-')
-      env:
-        PLUGIN_NAME: ${{ steps.plugin-name.outputs.info }}
-      shell: pwsh
-      run: |
-        Set-StrictMode -Version Latest
-        $ErrorActionPreference = 'Stop'
-        $ProgressPreference = 'SilentlyContinue'
-
-        Set-Location "$env:GITHUB_WORKSPACE"
-
-        dotnet publish "$env:PLUGIN_NAME" -c "$env:CONFIGURATION" -o "out\plugin\$env:PLUGIN_NAME" -p:ContinuousIntegrationBuild=true -p:TargetLatestRuntimePatch=false -p:UseAppHost=false --nologo
-
-        if ($LastExitCode -ne 0) {
-            throw "Last command failed."
-        }
-
-        # By default use fastest compression
-        $compressionArgs = '-mx=1'
-
-        # Include extra logic for builds marked for release
-        if ($env:GITHUB_REF -like 'refs/tags/*') {
-            # Tweak compression args for release publishing
-            $compressionArgs = '-mx=9', '-mfb=258', '-mpass=15'
-        }
-
-        # Create the final zip file
-        7z a -bd -slp -tzip -mm=Deflate $compressionArgs "out\$env:PLUGIN_NAME.zip" "$env:GITHUB_WORKSPACE\out\plugin\$env:PLUGIN_NAME\*"
-
-        if ($LastExitCode -ne 0) {
-            throw "Last command failed."
-        }
-
-    - name: Upload plugin artifact
-      uses: actions/upload-artifact@v4.6.1
-      with:
-        if-no-files-found: error
-        name: ${{ matrix.os }}_${{ steps.plugin-name.outputs.info }}
-        path: out/${{ steps.plugin-name.outputs.info }}.zip
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4.6.1
+        with:
+          if-no-files-found: error
+          name: ${{ matrix.os }}_${{ steps.plugin-name.outputs.info }}
+          path: out/${{ steps.plugin-name.outputs.info }}.zip
 
   release:
     needs: publish
@@ -180,22 +87,22 @@ jobs:
       contents: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4.2.2
-      with:
-        show-progress: false
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          show-progress: false
 
-    - name: Download plugin artifact from ubuntu-latest
-      uses: actions/download-artifact@v4.1.9
-      with:
-        name: ubuntu-latest_${{ needs.publish.outputs.PLUGIN_NAME }}
-        path: out
-    
-    - name: Create release
-      uses: softprops/action-gh-release@v2
-      with:
-        name: needs.publish.outputs.PLUGIN_NAME
-        tag_name: ${{ steps.create_version.outputs.version }}
-        body: ${{ steps.create_version.outputs.version }}
-        files: out/${{ steps.plugin-name.outputs.info }}.zip
-        fail_on_unmatched_files: true
+      - name: Download plugin artifact from ubuntu-latest
+        uses: actions/download-artifact@v4.1.9
+        with:
+          name: ubuntu-latest_${{ needs.publish.outputs.PLUGIN_NAME }}
+          path: out
+      
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ needs.publish.outputs.PLUGIN_NAME }}
+          tag_name: ${{ needs.publish.outputs.PLUGIN_VERSION }}
+          body: ${{ needs.publish.outputs.PLUGIN_VERSION }}
+          files: out/${{ needs.publish.outputs.PLUGIN_NAME }}.zip
+          fail_on_unmatched_files: true
