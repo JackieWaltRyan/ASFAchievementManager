@@ -23,6 +23,8 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 	private static readonly ConcurrentDictionary<Bot, AchievementHandler> AchievementHandlers = new();
 	public string Name => nameof(ASFAchievementManager);
 	public Version Version => typeof(ASFAchievementManager).Assembly.GetName().Version ?? new Version("0");
+ 
+    public Timer RefreshTimer;
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
@@ -127,8 +129,6 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		if (isEnabled) {
 			await AchievementsAutoFarm(bot).ConfigureAwait(false);
 
-			Timer RefreshTimer;
-
 			int CollectTimeout = 60 * 60 * 1000;
 
 			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
@@ -143,6 +143,10 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		return Task.FromResult<IReadOnlyCollection<ClientMsgHandler>?>([currentBotAchievementHandler]);
 	}
 
+    public Task OnBotDisconnected(Bot bot, EResult reason) {
+		return RefreshTimer.Dispose();
+	}
+
 	//Responses
 
 	private static async Task<string?> AchievementsAutoFarm(Bot bot) {
@@ -152,7 +156,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Count);
 
 		foreach (uint gameID in ownedAppIDs) {
-			string appid = gameID.ToString();
+			string appid = gameID.ToString(CultureInfo.InvariantCulture);
 
 			if (!uint.TryParse(appid, out uint appId)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
@@ -173,7 +177,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 			string results = await Task.Run(() => achievementHandler.GetAchievements(bot, appId)).ConfigureAwait(false);
 
-			if (results.Contains("u274C", System.StringComparison)) {
+			if (results.Contains("u274C", StringComparison.OrdinalIgnoreCase)) {
 				HashSet<uint> achievements = [];
 
 				string[] achievementStrings = achievementNumbers.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
@@ -195,7 +199,11 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 				}
 
 				ASF.ArchiLogger.LogGenericInfo(await Task.Run(() => achievementHandler.SetAchievements(bot, appId, achievements, true)).ConfigureAwait(false));
+
+                return "";
 			}
+   
+            return "";
 		}
 	}
 
