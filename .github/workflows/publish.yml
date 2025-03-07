@@ -1,19 +1,56 @@
 name: Plugin-publish
 
-on: [push, pull_request]
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
 
 env:
   CONFIGURATION: Release
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_NOLOGO: true
   DOTNET_SDK_VERSION: 9.0
-  GPG_PRIVATE_KEY: ${{ secrets.ARCHIBOT_GPG_PRIVATE_KEY }} # Optional, if secret not provided, will skip signing SHA512SUMS with GPG key. You can specify your own credentials if you'd like to, simply change ARCHIBOT_GPG_PRIVATE_KEY here to the one you want to use
 
 permissions:
   contents: read
 
 jobs:
+  version:
+    runs-on: windows-latest
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+
+      - name: Create version
+        id: create_version
+        shell: python
+        run: |
+          from datetime import datetime
+          from os import getenv
+          
+          DATE_Y = int(datetime.now().strftime(format="%y"))
+          DATE_M = int(datetime.now().strftime(format="%m"))
+          DATE_D = int(datetime.now().strftime(format="%d"))
+          TIME = str(int(datetime.now().strftime(format="%H%M%S"))).rjust(6, "0")
+          
+          VERSION = f"{DATE_Y}.{DATE_M}.{DATE_D}.{TIME}"
+          
+          print(VERSION)
+          
+          with open(file=getenv(key="GITHUB_OUTPUT"),
+                    mode="a") as github_output_file:
+              github_output_file.write(f"version={VERSION}")
+  
   publish:
+    needs: version
+    
     strategy:
       fail-fast: false
       matrix:
@@ -136,7 +173,6 @@ jobs:
         path: out/${{ steps.plugin-name.outputs.info }}.zip
 
   release:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
     needs: publish
     runs-on: ubuntu-latest
 
@@ -154,52 +190,12 @@ jobs:
       with:
         name: ubuntu-latest_${{ needs.publish.outputs.PLUGIN_NAME }}
         path: out
-
-    - name: Import GPG key for signing
-      uses: crazy-max/ghaction-import-gpg@v6.2.0
-      if: ${{ env.GPG_PRIVATE_KEY != null }}
+    
+    - name: Create release
+      uses: softprops/action-gh-release@v2
       with:
-        gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
-
-    - name: Generate SHA-512 checksums and signature
-      shell: sh
-      run: |
-        set -eu
-
-        (
-            cd "out"
-
-            sha512sum *.zip > SHA512SUMS
-
-            if [ -n "$GPG_PRIVATE_KEY" ]; then
-                gpg -a -b -o SHA512SUMS.sign SHA512SUMS
-            fi
-        )
-
-    - name: Upload SHA512SUMS
-      uses: actions/upload-artifact@v4.6.1
-      with:
-        if-no-files-found: error
-        name: SHA512SUMS
-        path: out/SHA512SUMS
-
-    - name: Upload SHA512SUMS.sign
-      uses: actions/upload-artifact@v4.6.1
-      if: ${{ env.GPG_PRIVATE_KEY != null }}
-      with:
-        if-no-files-found: error
-        name: SHA512SUMS.sign
-        path: out/SHA512SUMS.sign
-
-    - name: Create GitHub release
-      uses: ncipollo/release-action@v1.16.0
-      with:
-        allowUpdates: true
-        artifactErrorsFailBuild: true
-        artifacts: "out/*"
-        bodyFile: .github/RELEASE_TEMPLATE.md
-        makeLatest: false
-        name: ${{ needs.publish.outputs.PLUGIN_NAME }} V${{ github.ref_name }}
-        prerelease: true
-        token: ${{ secrets.GITHUB_TOKEN }}
-        updateOnlyUnreleased: true
+        name: needs.publish.outputs.PLUGIN_NAME
+        tag_name: ${{ steps.create_version.outputs.version }}
+        body: ${{ steps.create_version.outputs.version }}
+        files: out/${{ steps.plugin-name.outputs.info }}.zip
+        fail_on_unmatched_files: true
