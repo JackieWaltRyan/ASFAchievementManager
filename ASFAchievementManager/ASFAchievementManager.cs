@@ -24,7 +24,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 	public string Name => nameof(ASFAchievementManager);
 	public Version Version => typeof(ASFAchievementManager).Assembly.GetName().Version ?? new Version("0");
  
-    public Timer RefreshTimer;
+    public Timer RefreshTimer = new Timer(e => {}, null, 1000000, 1000000);;
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
@@ -111,7 +111,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 	public async Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 		if (additionalConfigProperties == null) {
-			return;
+			return null;
 		}
 
 		bool isEnabled = false;
@@ -133,6 +133,8 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
 		}
+
+        return Task.CompletedTask;
 	}
 
 	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) => Task.CompletedTask;
@@ -143,13 +145,14 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		return Task.FromResult<IReadOnlyCollection<ClientMsgHandler>?>([currentBotAchievementHandler]);
 	}
 
-    public void OnBotDisconnected(Bot bot, EResult reason) {
+    public Task OnBotDisconnected(Bot bot, EResult reason) {
 		RefreshTimer.Dispose();
+        return Task.CompletedTask;
 	}
 
 	//Responses
 
-	private static async void AchievementsAutoFarm(Bot bot) {
+	private static async Task AchievementsAutoFarm(Bot bot) {
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
@@ -160,17 +163,17 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 			if (!uint.TryParse(appid, out uint appId)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
-				return;
+				return null;
 			}
 
 			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
-				return;
+				return null;
 			}
 
 			if (achievementHandler == null) {
 				bot.ArchiLogger.LogNullError(achievementHandler);
-				return;
+				return null;
 			}
 
 			string achievementNumbers = "*";
@@ -186,7 +189,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 					foreach (string achievement in achievementStrings) {
 						if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
 							ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
-							return;
+							return null;
 						}
 
 						_ = achievements.Add(achievementNumber);
@@ -194,11 +197,12 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 					if (achievements.Count == 0) {
 						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
-						return;
+						return null;
 					}
 				}
 
 				ASF.ArchiLogger.LogGenericInfo(await Task.Run(() => achievementHandler.SetAchievements(bot, appId, achievements, true)).ConfigureAwait(false));
+                return Task.CompletedTask;
 			}
 		}
 	}
