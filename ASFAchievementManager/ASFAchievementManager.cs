@@ -127,7 +127,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		if (isEnabled) {
 			await AchievementsAutoFarm(bot).ConfigureAwait(false);
 
-			Timer RefreshTimer = null;
+			Timer RefreshTimer;
 
 			int CollectTimeout = 60 * 60 * 1000;
 
@@ -145,14 +145,14 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 
 	//Responses
 
-	private static async Task AchievementsAutoFarm(Bot bot) {
+	private static async AchievementsAutoFarm(Bot bot) {
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
-		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Length);
+		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Count);
 
-		foreach (string gameID in ownedAppIDs) {
-			string appid = gameID;
+		foreach (uint gameID in ownedAppIDs) {
+			uint appid = gameID;
 
 			if (!uint.TryParse(appid, out uint appId)) {
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
