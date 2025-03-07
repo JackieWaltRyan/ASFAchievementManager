@@ -125,6 +125,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 		}
 		
 		if (isEnabled) {
+            #pragma warning disable CA2000
             Timer RefreshTimer;
   
 			await AchievementsAutoFarm(bot).ConfigureAwait(false);
@@ -132,10 +133,7 @@ internal sealed class ASFAchievementManager : IBotSteamClient, IBotCommand2, IAS
 			int CollectTimeout = 60 * 60 * 1000;
 
 			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
-
-            if (bot == null) {
-                await RefreshTimer.DisposeAsync();
-            }
+            #pragma warning restore CA2000
 		}
 
         return;
