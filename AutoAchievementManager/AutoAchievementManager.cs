@@ -6,6 +6,8 @@ using ArchiSteamFarm.Steam.Exchange;
 using ArchiSteamFarm.Steam.Integration.Callbacks;
 using ArchiSteamFarm.Steam;
 using ArchiSteamFarm.Storage;
+using ArchiSteamFarm.Steam.Interaction;
+using ArchiSteamFarm.Localization;
 using JetBrains.Annotations;
 using SteamKit2;
 using System.Collections.Generic;
@@ -13,6 +15,10 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System;
+using System.Composition;
+using System.Linq;
+using System.Collections.Concurrent;
+using System.Globalization;
 
 namespace AutoAchievementManager;
 
@@ -56,7 +62,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
+	public Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotCommand: " + bot.OwnedPackages.Count);
 
 		return "";
@@ -74,16 +80,16 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task GetMachineInfoProvider(Bot bot) {
+	public Task<IMachineInfoProvider?> GetMachineInfoProvider(Bot bot) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: GetMachineInfoProvider: " + bot.OwnedPackages.Count);
 
 		return Task.FromResult((IMachineInfoProvider?) null);
 	}
 
-	public Task OnBotFriendRequest(Bot bot, ulong steamID) {
+	public Task<bool> OnBotFriendRequest(Bot bot, ulong steamID) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotFriendRequest: " + bot.OwnedPackages.Count);
 
-		return Task.CompletedTask;
+		return false;
 	}
 
 	public Task OnSelfPersonaState(Bot bot, SteamFriends.PersonaStateCallback data, string? nickname, string? avatarHash) {
@@ -92,7 +98,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotMessage(Bot bot, ulong steamID, string message) {
+	public Task<string?> OnBotMessage(Bot bot, ulong steamID, string message) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotMessage: " + bot.OwnedPackages.Count);
 
 		return "";
@@ -110,13 +116,13 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotSteamHandlersInit(Bot bot) {
+	public Task<IReadOnlyCollection<ClientMsgHandler>?> OnBotSteamHandlersInit(Bot bot) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotSteamHandlersInit: " + bot.OwnedPackages.Count);
 
 		return Task.FromResult((IReadOnlyCollection<ClientMsgHandler>?) null);
 	}
 
-	public Task OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
+	public Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotTradeOffer: " + bot.OwnedPackages.Count);
 
 		return false;
