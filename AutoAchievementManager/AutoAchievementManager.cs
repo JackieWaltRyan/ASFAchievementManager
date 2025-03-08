@@ -33,9 +33,7 @@ internal sealed class AutoAchievementManager: IBotConnection, IBotSteamClient {
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		Timer refreshTimer = new((e) => {
-			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + bot.OwnedPackages.Count);
-		}, null, 1000, 1000);
+		Timer refreshTimer = new(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, 1000, 1000);
 
 		return Task.CompletedTask;
 	}
@@ -45,18 +43,18 @@ internal sealed class AutoAchievementManager: IBotConnection, IBotSteamClient {
 	}
 
 	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) {
-		callbackManager.Subscribe<SteamUser.AccountInfoCallback>((e) => {
-			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: AccountInfoCallback: " + bot.OwnedPackages.Count);
-		});
+		callbackManager.Subscribe<SteamUser.AccountInfoCallback>(callback => OnAccountInfo(bot, "AccountInfoCallback"));
 
-		callbackManager.Subscribe<SteamApps.LicenseListCallback>((e) => {
-			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: LicenseListCallback: " + bot.OwnedPackages.Count);
-		});
+		callbackManager.Subscribe<SteamApps.LicenseListCallback>(callback => OnAccountInfo(bot, "LicenseListCallback"));
 
 		return Task.CompletedTask;
 	}
 
 	public Task<IReadOnlyCollection<ClientMsgHandler>?> OnBotSteamHandlersInit(Bot bot) {
 		return Task.FromResult((IReadOnlyCollection<ClientMsgHandler>?) null);
+	}
+
+	private static void OnAccountInfo(Bot bot, string message) {
+		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + message + ": " + bot.OwnedPackages.Count);
 	}
 }
