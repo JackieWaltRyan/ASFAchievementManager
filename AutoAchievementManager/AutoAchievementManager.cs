@@ -36,7 +36,7 @@ internal sealed class AutoAchievementManager: IBotConnection {
 
 	public Task OnBotLoggedOn(Bot bot) {
 		aTimer = new Timer(1000);
-        aTimer.Elapsed += OnAccountInfo(bot, "OnBotLoggedOn");
+        aTimer.Elapsed += (sender, e) => OnAccountInfo(bot, "OnBotLoggedOn");
         aTimer.AutoReset = true;
         aTimer.Enabled = true;
 
