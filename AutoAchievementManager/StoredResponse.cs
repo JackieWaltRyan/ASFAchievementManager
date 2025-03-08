@@ -1,6 +1,6 @@
 using SteamKit2.Internal;
 
-namespace ASFAchievementManager;
+namespace AutoAchievementManager;
 
 public class StoredResponse {
 	public bool Success { get; set; }

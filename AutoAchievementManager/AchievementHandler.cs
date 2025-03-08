@@ -10,9 +10,8 @@ using ArchiSteamFarm.Localization;
 using SteamKit2;
 using SteamKit2.Internal;
 
+namespace AutoAchievementManager;
 
-
-namespace ASFAchievementManager;
 public sealed class AchievementHandler : ClientMsgHandler {
 	public override void HandleMsg(IPacketMsg packetMsg) {
 		if (packetMsg == null) {
@@ -101,9 +100,9 @@ public sealed class AchievementHandler : ClientMsgHandler {
 									return null;
 								}
 
-								string lang = ASFAchievementManager.AchievementsCulture == null ?
+								string lang = AutoAchievementManager.AchievementsCulture == null ?
 													CultureInfo.CurrentUICulture.EnglishName.ToLower(CultureInfo.CurrentCulture) :
-													ASFAchievementManager.AchievementsCulture.EnglishName.ToLower(CultureInfo.CurrentCulture);
+													AutoAchievementManager.AchievementsCulture.EnglishName.ToLower(CultureInfo.CurrentCulture);
 
 								Dictionary<string, string> countryLanguageMap = new()
 								{

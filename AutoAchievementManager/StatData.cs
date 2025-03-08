@@ -1,4 +1,5 @@
-namespace ASFAchievementManager;
+namespace AutoAchievementManager;
+
 public class StatData {
 	public uint StatNum { get; set; }
 	public int BitNum { get; set; }
