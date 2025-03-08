@@ -13,7 +13,7 @@ using SteamKit2;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Threading;
+using System.Timers;
 using System.Threading.Tasks;
 using System;
 using System.Composition;
@@ -28,14 +28,17 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
 
+	private static Timer aTimer;
+
 	public Task OnLoaded() {
 		return Task.CompletedTask;
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		#pragma warning disable CA2000
-			Timer refreshTimer = new(OnAccountInfo(bot, "OnBotLoggedOn"), null, 1000, 1000);
-		#pragma warning restore CA2000
+		aTimer = new Timer(1000);
+        aTimer.Elapsed += OnAccountInfo(bot, "OnBotLoggedOn");
+        aTimer.AutoReset = true;
+        aTimer.Enabled = true;
 
 		return Task.CompletedTask;
 	}
@@ -46,5 +49,10 @@ internal sealed class AutoAchievementManager: IBotConnection {
 
 	private static void OnAccountInfo(Bot bot, string message) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + message + ": " + bot.OwnedPackages.Count);
+
+		if (bot.OwnedPackages.Count != 0) {
+			aTimer.Stop();
+      		aTimer.Dispose();
+		}
 	}
 }
