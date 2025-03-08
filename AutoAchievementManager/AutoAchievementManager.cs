@@ -106,7 +106,7 @@ namespace AutoAchievementManager {
 			}
 		}
 
-		public static async Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
+		public async Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 			if (additionalConfigProperties == null) {
 				return;
 			}
