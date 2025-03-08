@@ -11,7 +11,6 @@ using ArchiSteamFarm.Localization;
 using SteamKit2;
 using System.Linq;
 using System.Collections.Concurrent;
-using System.Text;
 using System.Text.Json;
 using System.Globalization;
 using ArchiSteamFarm.Web.GitHub.Data;
@@ -22,8 +21,6 @@ namespace AutoAchievementManager;
 [Export(typeof(IPlugin))]
 internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IASF, IGitHubPluginUpdates, IBotModules {
 	private static readonly ConcurrentDictionary<Bot, AchievementHandler> AchievementHandlers = new();
-	private static readonly CompositeFormat CurrentCulture = CompositeFormat.Parse(CultureInfo.CurrentCulture);
-
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? new Version("0");
 
@@ -36,7 +33,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		ArgumentException.ThrowIfNullOrEmpty(asfVariant);
 
 		if (string.IsNullOrEmpty(RepositoryName)) {
-			ASF.ArchiLogger.LogGenericError(string.Format(null, CurrentCulture, Strings.WarningFailedWithError, nameof(RepositoryName)));
+			ASF.ArchiLogger.LogGenericError(string.Format(CultureInfo.CurrentCulture, Strings.WarningFailedWithError, nameof(RepositoryName)));
 
 			return null;
 		}
@@ -50,19 +47,19 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		Version newVersion = new(releaseResponse.Tag);
 
 		if (!(Version.Major == newVersion.Major && Version.Minor == newVersion.Minor && Version.Build == newVersion.Build) && !(asfUpdate || forced)) {
-			ASF.ArchiLogger.LogGenericInfo(string.Format(null, CurrentCulture, "New {0} plugin version {1} is only compatible with latest ASF version", Name, newVersion));
+			ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, "New {0} plugin version {1} is only compatible with latest ASF version", Name, newVersion));
 			return null;
 		}
 
 
 		if (Version >= newVersion & !forced) {
-			ASF.ArchiLogger.LogGenericInfo(string.Format(null, CurrentCulture, Strings.PluginUpdateNotFound, Name, Version, newVersion));
+			ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNotFound, Name, Version, newVersion));
 
 			return null;
 		}
 
 		if (releaseResponse.Assets.Count == 0) {
-			ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
+			ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
 
 			return null;
 		}
@@ -70,12 +67,12 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		ReleaseAsset? asset = await ((IGitHubPluginUpdates) this).GetTargetReleaseAsset(asfVersion, asfVariant, newVersion, releaseResponse.Assets).ConfigureAwait(false);
 
 		if ((asset == null) || !releaseResponse.Assets.Contains(asset)) {
-			ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
+			ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateNoAssetFound, Name, Version, newVersion));
 
 			return null;
 		}
 
-		ASF.ArchiLogger.LogGenericInfo(string.Format(null, CurrentCulture, Strings.PluginUpdateFound, Name, Version, newVersion));
+		ASF.ArchiLogger.LogGenericInfo(string.Format(CultureInfo.CurrentCulture, Strings.PluginUpdateFound, Name, Version, newVersion));
 
 		return asset.DownloadURL;
 	}
@@ -162,12 +159,12 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 			string appid = gameID.ToString(CultureInfo.InvariantCulture);
 
 			if (!uint.TryParse(appid, out uint appId)) {
-				ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
+				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
 				return;
 			}
 
 			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
-				ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
+				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
 				return;
 			}
 
@@ -188,7 +185,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 				if (!achievementNumbers.Equals("*", StringComparison.Ordinal)) {
 					foreach (string achievement in achievementStrings) {
 						if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
-							ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.ErrorParsingObject, achievement));
+							ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
 							return;
 						}
 
@@ -196,7 +193,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 					}
 
 					if (achievements.Count == 0) {
-						ASF.ArchiLogger.LogGenericWarning(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
+						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
 						return;
 					}
 				}
@@ -215,7 +212,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		string[] gameIDs = appids.Split(Separator, StringSplitOptions.RemoveEmptyEntries);
 
 		if (gameIDs.Length == 0) {
-			return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, nameof(gameIDs)));
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(gameIDs)));
 		}
 		if (AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
 			if (achievementHandler == null) {
@@ -227,7 +224,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 
 			foreach (string game in gameIDs) {
 				if (!uint.TryParse(game, out uint gameID) || (gameID == 0)) {
-					return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorParsingObject, nameof(gameID)));
+					return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, nameof(gameID)));
 				}
 
 				_ = gamesToGetAchievements.Add(gameID);
@@ -242,7 +239,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 
 		} else {
 
-			return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
 		}
 
 	}
@@ -252,7 +249,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		HashSet<Bot>? bots = Bot.GetBots(botNames);
 
 		if ((bots == null) || (bots.Count == 0)) {
-			return Commands.FormatStaticResponse(string.Format(null, CurrentCulture, Strings.BotNotFound, botNames));
+			return Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames));
 		}
 
 		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseAchievementList(Commands.GetProxyAccess(bot, access, steamID), bot, appids))).ConfigureAwait(false);
@@ -269,14 +266,14 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		}
 
 		if (string.IsNullOrEmpty(achievementNumbers)) {
-			return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorObjectIsNull, nameof(achievementNumbers)));
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorObjectIsNull, nameof(achievementNumbers)));
 		}
 		if (!uint.TryParse(appid, out uint appId)) {
-			return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
 		}
 
 		if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
-			return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
 		}
 
 		if (achievementHandler == null) {
@@ -291,13 +288,13 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		if (!achievementNumbers.Equals("*", StringComparison.Ordinal)) {
 			foreach (string achievement in achievementStrings) {
 				if (!uint.TryParse(achievement, out uint achievementNumber) || (achievementNumber == 0)) {
-					return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorParsingObject, achievement));
+					return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorParsingObject, achievement));
 				}
 
 				_ = achievements.Add(achievementNumber);
 			}
 			if (achievements.Count == 0) {
-				return bot.Commands.FormatBotResponse(string.Format(null, CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
+				return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
 			}
 		}
 		return bot.Commands.FormatBotResponse(await Task.Run(() => achievementHandler.SetAchievements(bot, appId, achievements, set)).ConfigureAwait(false));
@@ -308,7 +305,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		HashSet<Bot>? bots = Bot.GetBots(botNames);
 
 		if ((bots == null) || (bots.Count == 0)) {
-			return Commands.FormatStaticResponse(string.Format(null, CurrentCulture, Strings.BotNotFound, botNames));
+			return Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames));
 		}
 
 		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseAchievementSet(Commands.GetProxyAccess(bot, access, steamID), bot, appid, achievementNumbers, set))).ConfigureAwait(false);
