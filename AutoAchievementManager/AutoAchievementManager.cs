@@ -1,20 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Composition;
-using System.Threading;
-using System.Threading.Tasks;
 using ArchiSteamFarm.Core;
-using ArchiSteamFarm.Steam;
-using ArchiSteamFarm.Steam.Interaction;
 using ArchiSteamFarm.Plugins.Interfaces;
-using ArchiSteamFarm.Localization;
+using ArchiSteamFarm.Steam.Cards;
+using ArchiSteamFarm.Steam.Data;
+using ArchiSteamFarm.Steam.Exchange;
+using ArchiSteamFarm.Steam.Integration.Callbacks;
+using ArchiSteamFarm.Steam;
+using ArchiSteamFarm.Storage;
+using JetBrains.Annotations;
 using SteamKit2;
-using System.Linq;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Globalization;
-using ArchiSteamFarm.Web.GitHub.Data;
-using ArchiSteamFarm.Web.GitHub;
+using System.Threading.Tasks;
+using System;
 
 namespace AutoAchievementManager;
 
@@ -36,7 +34,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotFarmingFinished(Bot bot) {
+	public Task OnBotFarmingFinished(Bot bot, bool farmedSomething) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotFarmingFinished: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
@@ -54,13 +52,13 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotCommand(Bot bot) {
+	public Task OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotCommand: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotDisconnected(Bot bot) {
+	public Task OnBotDisconnected(Bot bot, EResult reason) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotDisconnected: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
@@ -72,31 +70,31 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotFriendRequest(Bot bot) {
+	public Task OnBotFriendRequest(Bot bot, ulong steamID) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotFriendRequest: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnSelfPersonaState(Bot bot) {
+	public Task OnSelfPersonaState(Bot bot, SteamFriends.PersonaStateCallback data, string? nickname, string? avatarHash) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnSelfPersonaState: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotMessage(Bot bot) {
+	public Task OnBotMessage(Bot bot, ulong steamID, string message) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotMessage: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotInitModules(Bot bot) {
+	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotInitModules: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotSteamCallbacksInit(Bot bot) {
+	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotSteamCallbacksInit: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
@@ -108,19 +106,19 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotTradeOffer(Bot bot) {
+	public Task OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotTradeOffer: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotTradeOfferResults(Bot bot) {
+	public Task OnBotTradeOfferResults(Bot bot, IReadOnlyCollection<ParseTradeResult> tradeResults) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotTradeOfferResults: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
 	}
 
-	public Task OnBotUserNotifications(Bot bot) {
+	public Task OnBotUserNotifications(Bot bot, IReadOnlyCollection<UserNotificationsCallback.EUserNotification> newNotifications) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotUserNotifications: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
