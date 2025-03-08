@@ -81,7 +81,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	private static readonly char[] Separator = [','];
 
 	public Task OnLoaded() {
-		ASF.ArchiLogger.LogGenericInfo("ASF Achievement Manager Plugin by JackieWaltRyan, powered by ginger cats");
+		ASF.ArchiLogger.LogGenericInfo("AutoAchievementManager Plugin Loaded.");
 		return Task.CompletedTask;
 	}
 
@@ -111,7 +111,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 		if (additionalConfigProperties == null) {
             ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: additionalConfigPropertiesNotFound");
-			return;
+			return Task.CompletedTask;
 		}
 
 		foreach (KeyValuePair<string, JsonElement> configProperty in additionalConfigProperties) {
@@ -125,7 +125,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 			}
 		}
 
-        return;
+        return Task.CompletedTask;
 	}
 
 	public async Task OnBotLoggedOn(Bot bot) {
@@ -180,6 +180,18 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		
 		ASF.ArchiLogger.LogGenericInfo("AutoAchievementManager: AutoFarm: Найдено игр: " + ownedAppIDs.Count);
 
+		if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
+			ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
+			return;
+		}
+
+		if (achievementHandler == null) {
+			ASF.ArchiLogger.LogNullError(achievementHandler);
+			return;
+		}
+
+		string achievementNumbers = "*";
+
 		foreach (uint gameID in ownedAppIDs) {
 			string appid = gameID.ToString(CultureInfo.InvariantCulture);
 
@@ -187,18 +199,6 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(appId)));
 				return;
 			}
-
-			if (!AchievementHandlers.TryGetValue(bot, out AchievementHandler? achievementHandler)) {
-				ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(AchievementHandlers)));
-				return;
-			}
-
-			if (achievementHandler == null) {
-				ASF.ArchiLogger.LogNullError(achievementHandler);
-				return;
-			}
-
-			string achievementNumbers = "*";
 
 			string results = await Task.Run(() => achievementHandler.GetAchievements(bot, appId)).ConfigureAwait(false);
 
