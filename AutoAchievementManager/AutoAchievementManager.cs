@@ -36,4 +36,8 @@ internal sealed class AutoAchievementManager: IBotConnection {
 
 		return Task.CompletedTask;
 	}
+
+	public Task OnBotDisconnected(Bot bot, EResult reason) {
+		return Task.CompletedTask;
+	}
 }
