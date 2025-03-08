@@ -128,13 +128,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
         return Task.CompletedTask;
 	}
 
-	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) {
-		callbackManager.Subscribe<SteamApps.LicenseListCallback>(callback => OnLicenseList(bot));
-
-		return Task.CompletedTask;
-	}
-
-	private async void OnLicenseList(Bot bot) {
+	public async Task OnBotInit(Bot bot) {
         if (bot == null) {
 			ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: BotNotFound");
 			return;
