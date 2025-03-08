@@ -23,6 +23,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	private static readonly ConcurrentDictionary<Bot, AchievementHandler> AchievementHandlers = new();
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? new Version("0");
+	public bool isEnabledAutoFarm = false;
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
@@ -112,31 +113,34 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 			return;
 		}
 
-		bool isEnabled = false;
-
 		foreach (KeyValuePair<string, JsonElement> configProperty in additionalConfigProperties) {
 			switch (configProperty.Key) {
 				case "AchievementsAutoFarm" when (configProperty.Value.ValueKind == JsonValueKind.True || configProperty.Value.ValueKind == JsonValueKind.False): {
-					isEnabled = configProperty.Value.GetBoolean();
+					isEnabledAutoFarm = configProperty.Value.GetBoolean();
+
 					bot.ArchiLogger.LogGenericInfo("Achievements Auto Farm: " + isEnabled.ToString());
 					break;
 				}
 			}
 		}
-		
-		if (isEnabled) {
+
+        return;
+	}
+
+	public async Task OnBotLoggedOn(Bot bot) {
+		if (isEnabledAutoFarm) {
             #pragma warning disable CA2000
-            Timer RefreshTimer;
-  
-			await AchievementsAutoFarm(bot).ConfigureAwait(false);
+	            Timer RefreshTimer;
+	  
+				await AchievementsAutoFarm(bot).ConfigureAwait(false);
 
-			int CollectTimeout = 60 * 60 * 1000;
+				int CollectTimeout = 60 * 60 * 1000;
 
-			RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
+				RefreshTimer = new Timer(async e => await AchievementsAutoFarm(bot).ConfigureAwait(false), null, CollectTimeout, CollectTimeout);
             #pragma warning restore CA2000
 		}
 
-        return;
+		return;
 	}
 
 	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) => Task.CompletedTask;
@@ -150,6 +154,21 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	//Responses
 
 	private static async Task AchievementsAutoFarm(Bot bot) {
+		if (bot == null) {
+			ASF.ArchiLogger.LogGenericError(string.Format(ArchiSteamFarm.Localization.Strings.BotNotFound));
+			return;
+		}
+
+		if (bot.OwnedPackages.Count == 0) {
+			ASF.ArchiLogger.LogGenericError(string.Format(Strings.NoAppsFound));
+			return;
+		}
+
+		if (ASF.GlobalDatabase == null) {
+			ASF.ArchiLogger.LogGenericError(string.Format(ArchiSteamFarm.Localization.Strings.ErrorObjectIsNull, nameof(ASF.GlobalDatabase)));
+			return;
+		}
+
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
