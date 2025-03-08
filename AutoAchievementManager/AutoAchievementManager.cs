@@ -108,6 +108,8 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		}
 	}
 
+	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) => Task.CompletedTask;
+
 	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 		if (additionalConfigProperties == null) {
             ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: additionalConfigPropertiesNotFound");
