@@ -33,7 +33,9 @@ internal sealed class AutoAchievementManager: IBotConnection, IBotSteamClient {
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		Timer refreshTimer = new(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, 1000, 1000);
+		#pragma warning disable CA2000
+			Timer refreshTimer = new(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, 1000, 1000);
+		#pragma warning restore CA2000
 
 		return Task.CompletedTask;
 	}
