@@ -23,7 +23,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	private static readonly ConcurrentDictionary<Bot, AchievementHandler> AchievementHandlers = new();
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? new Version("0");
-	public bool isEnabledAutoFarm = false;
+	public bool isEnabledAutoFarm;
 
 	public static CultureInfo? AchievementsCulture { get; private set; }
 
@@ -108,8 +108,9 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		}
 	}
 
-	public async Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
+	public Task OnBotInitModules(Bot bot, IReadOnlyDictionary<string, JsonElement>? additionalConfigProperties = null) {
 		if (additionalConfigProperties == null) {
+            ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: additionalConfigPropertiesNotFound");
 			return;
 		}
 
@@ -118,7 +119,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 				case "AchievementsAutoFarm" when (configProperty.Value.ValueKind == JsonValueKind.True || configProperty.Value.ValueKind == JsonValueKind.False): {
 					isEnabledAutoFarm = configProperty.Value.GetBoolean();
 
-					bot.ArchiLogger.LogGenericInfo("Achievements Auto Farm: " + isEnabled.ToString());
+	                ASF.ArchiLogger.LogGenericInfo("AutoAchievementManager: AutoFarm: " + isEnabledAutoFarm.ToString());
 					break;
 				}
 			}
@@ -128,6 +129,11 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 	}
 
 	public async Task OnBotLoggedOn(Bot bot) {
+        if (bot == null) {
+			ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: BotNotFound");
+			return;
+		}
+  
 		if (isEnabledAutoFarm) {
             #pragma warning disable CA2000
 	            Timer RefreshTimer;
@@ -155,24 +161,24 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 
 	private static async Task AchievementsAutoFarm(Bot bot) {
 		if (bot == null) {
-			ASF.ArchiLogger.LogGenericError(string.Format(ArchiSteamFarm.Localization.Strings.BotNotFound));
+			ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: BotNotFound");
 			return;
 		}
 
 		if (bot.OwnedPackages.Count == 0) {
-			ASF.ArchiLogger.LogGenericError(string.Format(Strings.NoAppsFound));
+			ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: NoAppsFound");
 			return;
 		}
 
 		if (ASF.GlobalDatabase == null) {
-			ASF.ArchiLogger.LogGenericError(string.Format(ArchiSteamFarm.Localization.Strings.ErrorObjectIsNull, nameof(ASF.GlobalDatabase)));
+			ASF.ArchiLogger.LogGenericError("AutoAchievementManager: AutoFarm: GlobalDatabaseNotFound");
 			return;
 		}
 
 		var ownedPackageIDs = bot.OwnedPackages.Keys.ToHashSet();
 		var ownedAppIDs = ASF.GlobalDatabase!.PackagesDataReadOnly.Where(x => ownedPackageIDs.Contains(x.Key) && x.Value.AppIDs != null).SelectMany(x => x.Value.AppIDs!).ToHashSet().ToList();
 		
-		ASF.ArchiLogger.LogGenericInfo("Achievements Auto Farm: Найдено игр: " + ownedAppIDs.Count);
+		ASF.ArchiLogger.LogGenericInfo("AutoAchievementManager: AutoFarm: Найдено игр: " + ownedAppIDs.Count);
 
 		foreach (uint gameID in ownedAppIDs) {
 			string appid = gameID.ToString(CultureInfo.InvariantCulture);
@@ -188,7 +194,7 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 			}
 
 			if (achievementHandler == null) {
-				bot.ArchiLogger.LogNullError(achievementHandler);
+				ASF.ArchiLogger.LogNullError(achievementHandler);
 				return;
 			}
 
@@ -212,7 +218,6 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 					}
 
 					if (achievements.Count == 0) {
-						ASF.ArchiLogger.LogGenericWarning(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, "Achievements list"));
 						return;
 					}
 				}
