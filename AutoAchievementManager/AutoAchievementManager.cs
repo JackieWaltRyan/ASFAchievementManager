@@ -24,7 +24,7 @@ using System.Globalization;
 namespace AutoAchievementManager;
 
 [Export(typeof(IPlugin))]
-internal sealed class AutoAchievementManager: IBotConnection {
+internal sealed class AutoAchievementManager: IBotConnection, IBotSteamClient {
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
 
@@ -33,7 +33,7 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		Timer refreshTimer = new(() => {
+		Timer refreshTimer = new((e) => {
 			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + bot.OwnedPackages.Count);
 		}, null, 1000, 1000);
 
@@ -42,5 +42,21 @@ internal sealed class AutoAchievementManager: IBotConnection {
 
 	public Task OnBotDisconnected(Bot bot, EResult reason) {
 		return Task.CompletedTask;
+	}
+
+	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) {
+		callbackManager.Subscribe<SteamUser.AccountInfoCallback>((e) => {
+			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: AccountInfoCallback: " + bot.OwnedPackages.Count);
+		});
+
+		callbackManager.Subscribe<SteamApps.LicenseListCallback>((e) => {
+			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: LicenseListCallback: " + bot.OwnedPackages.Count);
+		});
+
+		return Task.CompletedTask;
+	}
+
+	public Task<IReadOnlyCollection<ClientMsgHandler>?> OnBotSteamHandlersInit(Bot bot) {
+		return Task.FromResult((IReadOnlyCollection<ClientMsgHandler>?) null);
 	}
 }
