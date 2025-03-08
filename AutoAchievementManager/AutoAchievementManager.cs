@@ -77,7 +77,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 	public Task GetMachineInfoProvider(Bot bot) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: GetMachineInfoProvider: " + bot.OwnedPackages.Count);
 
-		return Task.FromResult((<IMachineInfoProvider?>) null);
+		return Task.FromResult((IMachineInfoProvider?) null);
 	}
 
 	public Task OnBotFriendRequest(Bot bot, ulong steamID) {
