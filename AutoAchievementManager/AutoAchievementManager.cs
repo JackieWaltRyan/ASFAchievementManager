@@ -155,8 +155,6 @@ internal sealed class AutoAchievementManager : IBotSteamClient, IBotCommand2, IA
 		return;
 	}
 
-	public Task OnBotSteamCallbacksInit(Bot bot, CallbackManager callbackManager) => Task.CompletedTask;
-
 	public Task<IReadOnlyCollection<ClientMsgHandler>?> OnBotSteamHandlersInit(Bot bot) {
 		AchievementHandler currentBotAchievementHandler = new();
 		_ = AchievementHandlers.TryAdd(bot, currentBotAchievementHandler);
