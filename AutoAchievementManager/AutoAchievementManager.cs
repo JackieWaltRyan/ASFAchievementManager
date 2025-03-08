@@ -13,6 +13,7 @@ using SteamKit2;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System;
 using System.Composition;
