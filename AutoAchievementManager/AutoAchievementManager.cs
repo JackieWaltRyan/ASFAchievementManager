@@ -33,7 +33,9 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		Timer refreshTimer = new(bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + bot.OwnedPackages.Count), null, 1000, 1000);
+		Timer refreshTimer = new(() => {
+			bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + bot.OwnedPackages.Count);
+		}, null, 1000, 1000);
 
 		return Task.CompletedTask;
 	}
