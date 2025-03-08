@@ -11,6 +11,7 @@ using ArchiSteamFarm.Localization;
 using SteamKit2;
 using System.Linq;
 using System.Collections.Concurrent;
+using System.Text;
 using System.Text.Json;
 using System.Globalization;
 using ArchiSteamFarm.Web.GitHub.Data;
