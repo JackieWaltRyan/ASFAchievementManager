@@ -64,7 +64,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 	public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotCommand: " + bot.OwnedPackages.Count);
 
-        await AchievementsAutoFarm().ConfigureAwait(false);
+		await Task.Run(() => {}).ConfigureAwait(false);
 
 		return "";
 	}
@@ -90,7 +90,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 	public async Task<bool> OnBotFriendRequest(Bot bot, ulong steamID) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotFriendRequest: " + bot.OwnedPackages.Count);
 
-  await AchievementsAutoFarm().ConfigureAwait(false);
+        await Task.Run(() => {}).ConfigureAwait(false);
 
 		return false;
 	}
@@ -104,7 +104,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 	public async Task<string?> OnBotMessage(Bot bot, ulong steamID, string message) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotMessage: " + bot.OwnedPackages.Count);
 
-  await AchievementsAutoFarm().ConfigureAwait(false);
+        await Task.Run(() => {}).ConfigureAwait(false);
 
 		return "";
 	}
@@ -130,7 +130,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 	public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotTradeOffer: " + bot.OwnedPackages.Count);
 
-  await AchievementsAutoFarm().ConfigureAwait(false);
+        await Task.Run(() => {}).ConfigureAwait(false);
 
 		return false;
 	}
@@ -145,9 +145,5 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotUserNotifications: " + bot.OwnedPackages.Count);
 
 		return Task.CompletedTask;
-	}
-
-    private static async Task AchievementsAutoFarm() {
-	    return;
 	}
 }
