@@ -25,7 +25,6 @@ namespace AutoAchievementManager;
 [Export(typeof(IPlugin))]
 internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCommand2, IBotConnection, IBotCustomMachineInfoProvider, IBotFriendRequest, IBotIdentity, IBotMessage, IBotModules, IBotSteamClient, IBotTradeOffer2, IBotTradeOfferResults, IBotUserNotifications {
 	public string Name => nameof(AutoAchievementManager);
-	public string RepositoryName => "JackieWaltRyan/AutoAchievementManager";
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
 
 	public Task OnLoaded() {
@@ -62,7 +61,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
+	public async Task<string?> OnBotCommand(Bot bot, EAccess access, string message, string[] args, ulong steamID = 0) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotCommand: " + bot.OwnedPackages.Count);
 
 		return "";
@@ -86,7 +85,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.FromResult((IMachineInfoProvider?) null);
 	}
 
-	public Task<bool> OnBotFriendRequest(Bot bot, ulong steamID) {
+	public async Task<bool> OnBotFriendRequest(Bot bot, ulong steamID) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotFriendRequest: " + bot.OwnedPackages.Count);
 
 		return false;
@@ -98,7 +97,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.CompletedTask;
 	}
 
-	public Task<string?> OnBotMessage(Bot bot, ulong steamID, string message) {
+	public async Task<string?> OnBotMessage(Bot bot, ulong steamID, string message) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotMessage: " + bot.OwnedPackages.Count);
 
 		return "";
@@ -122,7 +121,7 @@ internal sealed class AutoAchievementManager: IBot, IBotCardsFarmerInfo, IBotCom
 		return Task.FromResult((IReadOnlyCollection<ClientMsgHandler>?) null);
 	}
 
-	public Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
+	public async Task<bool> OnBotTradeOffer(Bot bot, TradeOffer tradeOffer, ParseTradeResult.EResult asfResult) {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: OnBotTradeOffer: " + bot.OwnedPackages.Count);
 
 		return false;
