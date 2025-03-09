@@ -28,7 +28,7 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
 
-	private static Timer aTimer;
+	private static Timer aTimer = new ();
 
 	public Task OnLoaded() {
 		return Task.CompletedTask;
