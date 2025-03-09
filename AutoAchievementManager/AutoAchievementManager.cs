@@ -13,7 +13,7 @@ using SteamKit2;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Timers;
+using System.Threading;
 using System.Threading.Tasks;
 using System;
 using System.Composition;
@@ -28,22 +28,21 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	public string Name => nameof(AutoAchievementManager);
 	public Version Version => typeof(AutoAchievementManager).Assembly.GetName().Version ?? throw new InvalidOperationException(nameof(Version));
 
-	private static Timer aTimer = new ();
+	private readonly Timer UserDataRefreshTimer;
 
 	public Task OnLoaded() {
 		return Task.CompletedTask;
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		aTimer = new Timer(1000);
-        aTimer.Elapsed += (sender, e) => OnAccountInfo(bot, "OnBotLoggedOn");
-        aTimer.AutoReset = true;
-        aTimer.Enabled = true;
+		UserDataRefreshTimer = new Timer(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, Timeout.Infinite, Timeout.Infinite);
 
 		return Task.CompletedTask;
 	}
 
 	public Task OnBotDisconnected(Bot bot, EResult reason) {
+		UserDataRefreshTimer.Dispose();
+
 		return Task.CompletedTask;
 	}
 
@@ -51,8 +50,7 @@ internal sealed class AutoAchievementManager: IBotConnection {
 		bot.ArchiLogger.LogGenericWarning("AutoAchievementManager: " + message + ": " + bot.OwnedPackages.Count);
 
 		if (bot.OwnedPackages.Count != 0) {
-			aTimer.Stop();
-      		aTimer.Dispose();
+			UserDataRefreshTimer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 		}
 	}
 }
