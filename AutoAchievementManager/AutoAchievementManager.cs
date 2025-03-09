@@ -35,7 +35,7 @@ internal sealed class AutoAchievementManager: IBotConnection {
 	}
 
 	public Task OnBotLoggedOn(Bot bot) {
-		UserDataRefreshTimer = new Timer(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, Timeout.Infinite, Timeout.Infinite);
+		UserDataRefreshTimer = new Timer(e => OnAccountInfo(bot, "OnBotLoggedOn"), null, 1000, 1000);
 
 		return Task.CompletedTask;
 	}
